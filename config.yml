@@ -1,0 +1,18 @@
+# Configuration file for the pwntter database
+db:
+    type:       mysql
+    host:       server
+    port:       3306
+    database:   twitter 
+    user:       user
+    password:   password
+
+output:
+    json:
+        callback: myCallback
+    html:
+#        template:  myTemplate.html
+
+clients:
+    print:      yes
+    minimum:    6

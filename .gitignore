@@ -1,3 +1,9 @@
+# pypwntterstats files
+
+*.html
+*.json
+myconfig.yml
+
 *.py[cod]
 
 # C extensions
