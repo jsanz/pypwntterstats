@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head prefix="og: http://ogp.me/ns#">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Twitter stats</title>
+    
+
+
+    <!-- styles -->
+    <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic,700italic|Ubuntu:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href="http://jorgesanz.net/assets/themes/jorge/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://jorgesanz.net/assets/themes/jorge/bootstrap/css/responsive.min.css" rel="stylesheet">
+    <link href="http://jorgesanz.net/assets/themes/jorge/css/style.css?body=1" rel="stylesheet" type="text/css" media="all">
+
+    <!-- JavaScript -->
+    <script src="http://jorgesanz.net/assets/js/jquery-1.7.min.js"></script>
+
+  </head>
+
+  <body class="">
+  <div class="navbar navbar-fixed-top"> 
+      <div class="navbar-inner"> 
+        <div class="container"> 
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse"> 
+            <span class="icon-bar"></span> 
+            <span class="icon-bar"></span> 
+            <span class="icon-bar"></span> 
+          </button> 
+          <a class="brand" href="/">Jorge Sanz</a>
+
+          <a href="https://plus.google.com/share?url=http://jorgesanz.net/twitter-stats/2012/12/29.html" 
+            onclick="javascript:window.open(this.href,'', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=600');return false;">
+            <img class="pull-right smicon" src="/assets/themes/jorge/img/smicons/plus.png" 
+              alt="Share on Google+"/>
+          </a>
+
+          <a href="https://twitter.com/share?url=http://jorgesanz.net/twitter-stats/2012/12/29.html&amp;ia=xurxosanz&amp;text=Twitter stats for 2012/12/29" 
+            onclick="javascript:window.open(this.href,'', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600');return false;">
+            <img class="smicon pull-right" src="/assets/themes/jorge/img/smicons/twitter.png" alt="Share on twitter+"/>
+          </a>
+
+          <a href="https://www.facebook.com/sharer/sharer.php?u=http://jorgesanz.net/twitter-stats/2012/12/29.html&amp;t=Twitter stats for 2012/12/29&amp;" 
+            onclick="javascript:window.open(this.href,'', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=400,width=650');return false;">
+            <img class="smicon pull-right" src="/assets/themes/jorge/img/smicons/facebook.png" alt="Share on facebook+"/>
+          </a>
+
+          <div class="nav-collapse"> 
+            <ul class="nav">
+              <li><a href="/">Home</a></li> 
+              <li><a href="/blog/">Blog</a></li> 
+              <li><a href="/talks/">Talks</a></li> 
+            </ul>
+            <form class="navbar-search pull-right" action="/search/index.html" method="get">
+              <input type="text" class="search-query" placeholder="Search" name="q" value="Search..."/>
+            </form>
+          </div>
+        </div> 
+      </div> 
+    </div> 
+
+    <div class="container" itemscope itemtype="http://schema.org/WebPage">
+
+<div class="content">
+
+<div class="page-header">
+  <h1>Twitter stats</h1>
+</div>
+
+<div class="row">
+  <div class="span12">
+
+<!-- a partir de aquí empieza la plantilla -->
+{% if data["general"] is defined %}
+<div class="row">
+  <div class="span12">
+    <h2>General</h2>
+    <div class="twitter-stats">
+      <code></br>
+      {{ "Run on"|strFormat(format='{:.<20}') }} {{data["general"]["run"]|strFormat(format='{:%A, %Y/%m/%d %H:%m:%S}')}}<br/>
+      {{ "Stats from"|strFormat(format='{:.<20}') }} {{data["general"]["from"]|strFormat(format='{:%Y/%m/%d %H:%M}')}}<br/>
+      {{ "Stats to"|strFormat(format='{:.<20}') }} {{data["general"]["to"]|strFormat(format='{:%Y/%m/%d %H:%M}')}}<br/>
+      {{ "Total tweets"|strFormat(format='{:.<20}') }} {{data["general"]["totalTweets"]|prettyint}}
+      </code>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if data["clientCount"] is defined %}
+<div class="row">
+  <div class="span4">
+    <h2>Clients</h3>
+    <div class="twitter-stats">
+      <code></br>{% set i = 1 %}
+      {%- for item in data["clientCount"] -%}
+      {{ "%3s"|format(i)|replace(" ","&nbsp;")}}.  {{ item[1]|unidecode|striptags|strFormat(format='{:.<30}')}}  {{item[0]|prettyint|strFormat(format="{: >6}")|replace(" ","&nbsp;")}}{% set i = i+ 1 %}<br/>{%- endfor -%}
+      </code>
+    </div>
+  </div>
+  <div class="span8">
+    <div id="clients_chart_div" ></div>
+  </div>
+</div>
+{% endif %}
+
+{% if data["busiest"] is defined %}
+  <div class="row">
+    <div class="span12">
+      <h2>Busiest users in feed</h2>
+      <p>Users with protected accounts won't appear</p>
+      <div class="span12">
+        <div id="busiest_chart_div"></div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% if data["hashtags"] is defined %}
+<div class="row">
+  <div class="span4">
+    <h2>Most popular hashtags in feed</h2>
+    <div class="twitter-stats">
+      <code></br>{% set i = 1 %}
+      {%- for item in data["hashtags"] -%}
+      {{ "%3s"|format(i)|replace(" ","&nbsp;")}}.  {{ item[0]|strFormat(format='{:.<30}')}}  {{item[1]|prettyint|strFormat(format="{: >6}")|replace(" ","&nbsp;")}}{% set i = i+ 1 %}<br/>{%- endfor -%}
+      </code>
+    </div>
+  </div>
+  <div class="span8">
+    <div id="hashtags-cloud" class="cloud"></div>
+  </div>
+</div>
+{% endif %}
+
+{% if data["words"] is defined %}
+<div class="row">
+  <div class="span4">
+    <h2>Most popular words in feed</h2>
+    <div class="twitter-stats">
+      <code></br>{% set i = 1 %}
+      {%- for item in data["words"] -%}
+      {{ "%3s"|format(i)|replace(" ","&nbsp;")}}.  {{ item[0]|strFormat(format='{:.<30}')}}  {{item[1]|prettyint|strFormat(format="{: >6}")|replace(" ","&nbsp;")}}{% set i = i+ 1 %}<br/>{%- endfor -%}
+      </code>
+    </div>
+  </div>
+  <div class="span8">
+    <div id="words-cloud" class="cloud"></div>
+  </div>
+</div>
+{% endif %}
+
+{% if data["busyHours"] is defined %}
+<div class="row">
+  <div class="span6">
+    <h2>Busiest hours in feed</h2>
+  </div>
+  <div class="span6">
+    The graph <!--<div id="clients_chart_div"></div>-->
+  </div>
+</div>
+{% endif %}
+
+{% if data["quietHours"] is defined %}
+<div class="row">
+  <div class="span6">
+    <h2>Quietest hours in feed</h2>
+  </div>
+  <div class="span6">
+    The graph <!--<div id="clients_chart_div"></div>-->
+  </div>
+</div>
+{% endif %}
+
+{% if data["busyDays"] is defined %}
+<div class="row">
+  <div class="span6">
+    <h2>Busiest days in feed</h2>
+  </div>
+  <div class="span6">
+    The graph <!--<div id="clients_chart_div"></div>-->
+  </div>
+</div>
+{% endif %}
+
+{% if data["quietDays"] is defined %}
+<div class="row">
+  <div class="span6">
+    <h2>Quietest days in feed</h2>
+  </div>
+  <div class="span6">
+    The graph <!--<div id="clients_chart_div"></div>-->
+  </div>
+</div>
+{% endif %}
+
+{% if data["postDay"] is defined %}
+<div class="row">
+  <div class="span6">
+    <h2>Posts by day of week in feed
+  </div>
+  <div class="span6">
+    The graph <!--<div id="clients_chart_div"></div>-->
+  </div>
+</div>
+{% endif %}
+
+<!-- Graphics Javascript -->
+
+<!--Load the AJAX API-->
+{% if data["hashtags"] or data["words"] is defined %}
+    <style>
+    div.cloud {margin-top: 100px;width: 600px;}
+    .term-cloud {font-family: 'Ubuntu'; font-size: 20px; line-height: 25px;}
+    .term-cloud-1 {font-size: 20px; color: #FEC44F; }
+    .term-cloud-2 {font-size: 24px; color: #FE9929; }
+    .term-cloud-3 {font-size: 28px; color: #EC7014; }
+    .term-cloud-4 {font-size: 22px; color: #EC7014; }
+    .term-cloud-5 {font-size: 26px; color: #CC4C02; }
+    .term-cloud-6 {font-size: 42px; color: #CC4C02; }
+    .term-cloud-7 {font-size: 46px; color: #993404; }
+    .term-cloud-8 {font-size: 50px; color: #993404; }
+    .term-cloud-9 {font-size: 54px; color: #662506; }
+    .term-cloud-error {font-family: 'Ubuntu'; font-size: 10px; color: red; }
+    .term-cloud-link {text-decoration: none; }
+    .term-cloud-link:hover {text-decoration: underline;}
+    </style>
+    <script type="text/javascript" src="http://visapi-gadgets.googlecode.com/svn/trunk/termcloud/tc.js"></script>
+{% endif %}
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+
+  // Load the Visualization API and the piechart package.
+  google.load('visualization', '1.0', {'packages':['corechart']});
+  
+  var seQcolors = [
+    '#FEE391',
+    '#FEC44F',
+    '#FE9929',
+    '#EC7014',
+    '#CC4C02',
+    '#993404',
+    '#662506'
+  ]
+
+  var quaColors = [
+    '#E41A1C',
+    '#377EB8',
+    '#4DAF4A',
+    '#984EA3',
+    '#FF7F00',
+    '#A65628',
+    '#F781BF',
+    '#999999'
+  ]
+  // Set a callback to run when the Google Visualization API is loaded.
+
+  {%if data["clientsCount"] is defined %}
+  google.setOnLoadCallback(drawClientsChart);
+  function drawClientsChart() {
+
+    // Create the data table.
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Client');
+    data.addColumn('number', 'Count');
+    data.addRows([{% set isNotFirst = false -%}
+    {%- for item in data["clientCount"] -%}
+	  {% if isNotFirst %},{% endif %}
+	  ['{{item[1]|unidecode|striptags }}',{{item[0]}}]
+	  {%- set isNotFirst = true -%}
+	 {%- endfor -%}
+    ]);
+
+    // Set chart options
+    var options = {
+        colors:quaColors,
+        'width':800,
+        'height':800,
+        fontName: 'Ubuntu'
+    };
+
+    // Instantiate and draw our chart, passing in some options.
+    var chart = new google.visualization.PieChart(document.getElementById('clients_chart_div'));
+    chart.draw(data, options);
+  }
+  {% endif %}
+
+  {% if data["busiest"]  is defined %}
+  google.setOnLoadCallback(drawBusiestChart);
+  function drawBusiestChart() {
+
+    // Create the data table.
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'User');
+    data.addColumn('number', 'Count');
+    data.addRows([{% set isNotFirst = false -%}
+    {%- for item in data["busiest"] -%}
+    {% if isNotFirst %},{% endif %}
+    ['{{item[1]}}',{{item[0]}}]
+    {%- set isNotFirst = true -%}
+   {%- endfor -%}
+    ]);
+
+    // Set chart options
+    var options = {
+          width:800,
+          height:400,
+          colors: ['#DD4814'],
+          fontName: 'Ubuntu',
+          legend:{position:'none'}
+        };
+
+    // Instantiate and draw our chart, passing in some options.
+    var chart = new google.visualization.BarChart(document.getElementById('busiest_chart_div'));
+    chart.draw(data, options);
+  }
+  {% endif %}
+
+  {% if data["hashtags"]  is defined %}
+  google.setOnLoadCallback(drawHT);
+      function drawHT() {
+        var data = new google.visualization.DataTable();
+          data.addColumn('string', 'Tag');
+          data.addColumn('number', 'Value');
+          data.addColumn('string','Link');
+          data.addRows([{% set isNotFirst = false -%}
+          {%- for item in data["cloudtags"] -%}
+          {% if isNotFirst %},{% endif %}
+          ['{{item[0]}}',{{item[1]}},'https://twitter.com/search?q={{item[0]|replace("#","%23")}}']
+          {%- set isNotFirst = true -%}
+         {%- endfor -%}
+          ]);
+        var outputDiv = document.getElementById('hashtags-cloud');
+        var tc = new TermCloud(outputDiv);
+        tc.draw(data, null);
+      }
+    {% endif %}
+  {% if data["words"]  is defined %}
+  google.setOnLoadCallback(drawWC);
+      function drawWC() {
+        var data = new google.visualization.DataTable();
+          data.addColumn('string', 'Tag');
+          data.addColumn('number', 'Value');
+          data.addRows([{% set isNotFirst = false -%}
+          {%- for item in data["cloudwords"] -%}
+          {% if isNotFirst %},{% endif %}
+          ['{{item[0]}}',{{item[1]}}]
+          {%- set isNotFirst = true -%}
+         {%- endfor -%}
+          ]);
+        var outputDiv = document.getElementById('words-cloud');
+        var tc = new TermCloud(outputDiv);
+        tc.draw(data, null);
+      }
+    {% endif %}
+</script>
+
+
+<!-- esto se queda fuera -->
+  </div> <!-- span12 -->
+  </div><!-- row general -->
+</div>
+
+
+      </div>
+
+      <footer>
+        <p>&copy; 
+          <span itemprop="copyrightHolder author">Jorge Sanz</span> 
+          <span itemprop="copyrightYear">2012</span>.          
+        
+          Static web built using <a href="http://jekyllbootstrap.com"
+            target="_blank" title="The Definitive Jekyll Blogging
+            Framework">Jekyll Bootstrap</a> and <a
+            href="http://twitter.github.com/bootstrap">Twitter Bootstrap</a>.
+          The design is United, from <a href="http://bootswatch.com/"
+            title="Bootstrap themes">Bootswatch</a>.  
+        </p> 
+      </footer>
+
+    </div> <!-- /container -->
+    <!-- JavaScript -->
+    <script src="/assets/js/bootstrap.min.js"></script>
+    <script src="/assets/js/bootstrap-collapse.js"></script>
+  </body>
+</html>
+

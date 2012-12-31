@@ -16,3 +16,7 @@ output:
 clients:
     print:      yes
     minimum:    6
+
+busiest:
+    print:      yes
+    number:     10

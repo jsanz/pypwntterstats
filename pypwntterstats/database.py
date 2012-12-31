@@ -74,17 +74,30 @@ class Database():
                 filter(Tweet.created_at > fromDate).\
                 filter(Tweet.created_at < toDate).all()
 
-    def getTweetsPerUser(self, fromDate, toDate):
-        """Returns a list of users and the number of tweets written. It hides
+    def getTweetsPerUser(self, fromDate, toDate, number):
+        """Returns a list of n users and the number of tweets written. It hides
             users that have their accounts protected.
 
             fromDate: formatted from date as 'YYY-MM-DD HH:MM:SS'
             toDate:last formatted to date as 'YYY-MM-DD HH:MM:SS'"""
-        #print self.session.query(self.tweets).filter_by(screen_name='xurxosanz').first()
-        for user in self.session.query(User).join(Tweet).\
-            filter(User.protected == 1):
-            print user
-        pass
+        return self.session.query(func.count(User.id), User.screen_name).\
+                join(Tweet).group_by(User.id).\
+                order_by(desc(func.count(User.id))).\
+                filter(Tweet.created_at > fromDate).\
+                filter(Tweet.created_at < toDate)[0: number]
+
+    def getHashTags(self, fromDate, toDate):
+        """Returns a list of tuples with hashtags and counts"""
+        return self.session.query(Tweet.text).\
+                filter('text like \'%#%\'').\
+                filter(Tweet.created_at > fromDate).\
+                filter(Tweet.created_at < toDate).all()
+
+    def getTweets(self, fromDate, toDate):
+        """Returns a list of tuples with hashtags and counts"""
+        return self.session.query(Tweet.text).\
+                filter(Tweet.created_at > fromDate).\
+                filter(Tweet.created_at < toDate).all()
 
     def __my_create_engine(self, config):
         """Creates a SQLAlchemy engine depending on the

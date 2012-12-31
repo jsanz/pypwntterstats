@@ -3,10 +3,12 @@ from datetime import date, timedelta
 
 
 def fromDateToInt(aDate):
+    """Creates a date from YYMMDD format"""
     return '{:%Y%m%d}'.format(aDate)
 
 
 def fromIntToDate(iDate):
+    """Creates a YYMMDD string from a Date"""
     year = int(str(iDate)[0:4])
     month = int(str(iDate)[4:6])
     day = int(str(iDate)[6:8])
@@ -14,6 +16,7 @@ def fromIntToDate(iDate):
 
 
 def formattedDate(string):
+    """Defines a argparse type format for YYYYMMDD string daes"""
     try:
         return fromIntToDate(string)
     except Exception:
@@ -22,11 +25,13 @@ def formattedDate(string):
 
 
 def yesterdayFormatted():
+    """Default for FROM parameter, 0:0 of yesterday"""
     return fromDateToInt(date.today() + timedelta(days=-1))
 
 
 def todayFormatted():
-    return fromDateToInt(date.today())
+    """Defaul for TO parameter, 23:59:59 of yesterday"""
+    return fromDateToInt(date.today() + timedelta(days=-1))
 
 
 class Arguments():
@@ -50,12 +55,14 @@ class Arguments():
         parser.add_argument("-F", "--FROM", type=formattedDate,
                             default=yesterdayFormatted(),
                             help="Define the starting day to retrieve the "
-                                    "report in YYYYMMDD format.")
+                                    "report in YYYYMMDD format. Defaults to 00:00 "
+                                    "of yeserday.")
 
         parser.add_argument("-T", "--TO", type=formattedDate,
                             default=todayFormatted(),
                             help="Define the last day to retrieve the "
-                                 "report in YYYYMMDD format.")
+                                 "report in YYYYMMDD format. Defaluts to 23:59:59 "
+                                 "of yesterday")
 
         parser.add_argument("-u", "--user", action="store", required=True,
                             help="User to query the database")
