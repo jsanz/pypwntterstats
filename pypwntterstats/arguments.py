@@ -36,12 +36,14 @@ def todayFormatted():
 
 class Arguments():
 
-    def __init__(self):
+    def __init__(self, customArgs=None):
         parser = argparse.ArgumentParser(
             description='Process pwntter database to generate fancy reports',
             epilog="Jorge Sanz (c)2012 - @xurxosanz - http://jorgesanz.net")
 
         parser.add_argument("-q", "--quiet", action="store_true")
+
+        parser.add_argument("-t", "--title", action="store_true")
 
         parser.add_argument("-c", "--config", type=file, required=True,
                             help="Configuration file in YML format")
@@ -67,4 +69,7 @@ class Arguments():
         parser.add_argument("-u", "--user", action="store", required=True,
                             help="User to query the database")
 
-        self.args = parser.parse_args()
+        if customArgs:
+            self.args = parser.parse_args(customArgs)
+        else:
+            self.args = parser.parse_args()

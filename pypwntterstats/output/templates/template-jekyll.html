@@ -1,33 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head prefix="og: http://ogp.me/ns#">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ data["title"] }}</title>
-    <!-- styles -->
-    <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic,700italic|Ubuntu:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet">
-    <style type="text/css">
-      div.twitter-stats code {
-        background: none;
-        border: none;
-        color: #333;
-        }
-    </style>
-  </head>
-
-  <body> 
-    <div class="container" itemscope itemtype="http://schema.org/WebPage">
-    <div class="content">
-
-    <div class="page-header">
-      <h1>{{ data["title"] }}</h1>
-    </div>
-
-    <div class="row">
-      <div class="span12">
-
+---
+layout: page
+title: {{data["title"]}}
+group: twitter-stats
+---
         <!-- a partir de aquí empieza la plantilla -->
         {% if data["general"] is defined %}
         <h2>General</h2>
@@ -318,22 +293,3 @@
                 }
               {% endif %}
         </script>
-
-<!-- esto se queda fuera -->
-      </div> <!-- span12 -->
-      </div><!-- row general -->
-      <footer>
-        <p>&copy; 
-        <span itemprop="copyrightHolder author">Jorge Sanz</span> 
-        <span itemprop="copyrightYear">2012</span>.          
-
-        Static web built using <a href="https://github.com/jsanz/pypwntterstats"
-        target="_blank" title="pyPwntterStats">pyPwntterStats</a> and <a
-        href="http://twitter.github.com/bootstrap">Twitter Bootstrap</a>.
-        </p> 
-      </footer>
-    </div>
-    </div>
-  </body>
-</html>
-

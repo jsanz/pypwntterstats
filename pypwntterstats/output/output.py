@@ -3,13 +3,14 @@
 import json
 from operator import __add__
 from cStringIO import StringIO
-from jinja2 import Template, Environment, PackageLoader
+from jinja2 import Environment, PackageLoader
 from datetime import datetime
 from unidecode import unidecode
 import locale
 import re
 import operator
-import string
+import codecs
+import logging
 
 
 class OutputProvider():
@@ -28,13 +29,47 @@ class OutputProvider():
 
 class Output():
     """Generic class to output reports"""
+    DEFAULTS = {
+        'clients': {'minimum': 10},
+        'busiest': {'number': 20},
+        'hashtags': {'number': 20, 'cloud': 50},
+        'words': {'number': 20, 'cloud': 50, 'stopwords': 'stopwords.txt'}
+    }
+
     data = dict()
 
     def __init__(self, config, db):
         self.config = config
         self.db = db
+        self.data["title"] = config.title
 
-    def printGeneral(self):
+    def doStats(self, config):
+        """Iterates over configuration trying to execute a method for every
+           confi item using introspection"""
+        for stat in config:
+            try:
+                if config[stat]["print"]:
+                    # merge the defaults an this config
+                    if stat in self.DEFAULTS:
+                        toolConfig = dict(self.DEFAULTS[stat].items() + config[stat].items())
+                    else:
+                        toolConfig = config[stat]
+                    # call the new method
+                    getattr(self, "print_{}".format(stat))(toolConfig)
+                else:
+                    logging.debug("Skipping {}".format(stat))
+            except KeyError, e:
+                logging.warning("No print config of {} (maybe no DEFAULT?)".format(stat))
+            except Exception, e:
+                raise e
+
+    def printReport(self):
+        """Get the string from the delegate and print it on a file"""
+        self.config.file.write(self.getRawString())
+        self.config.file.close()
+
+    def print_general(self, config):
+        logging.debug("Printing general stats")
         self.data["general"] = {"run": datetime.now(),
                                 "from": self.config.fromDate,
                                 "to": self.config.toDate,
@@ -42,51 +77,83 @@ class Output():
                                                                        self.config.toDate)
                                 }
 
-    def printClients(self, config):
-        """Produces an output of clients with count
-
-        config: minimum number of tweets to print per client"""
+    def print_clients(self, config):
+        """Produces an output of clients with count"""
+        logging.debug("Printing clients stats")
+        minimum = config["minimum"]
         allData = self.db.getClientFrequencies(
                                     self.config.fromDate,
                                     self.config.toDate)
 
-        over = [(data[0], data[1].decode("utf8")) for data in allData if data[0] >= config]
-        below = [data[0] for data in allData if data[0] < config]
+        over = [(data[0], data[1].decode("utf8")) for data in allData if data[0] >= minimum]
+        below = [data[0] for data in allData if data[0] < minimum]
         countBelow = len(below)
         numBelow = reduce(__add__, below)
-        others = (numBelow, '{} clients of {} or less'.format(countBelow, config - 1))
+        others = (numBelow, '{} clients of {} or less'.format(countBelow, minimum - 1))
 
         self.data["clientCount"] = over + [others]
 
-    def printBusiest(self, number):
+    def print_busiest(self, config):
+        logging.debug("Printing busiest stats")
+        number = config["number"]
         self.data["busiest"] = self.db.getTweetsPerUser(self.config.fromDate,
                                     self.config.toDate, number)
 
-    def printHashtags(self, number, cloud):
+    def print_hashtags(self, config):
+        logging.debug("Printing hashtags stats")
+        number = config["number"]
+        cloud = config["cloud"]
         data = self.db.getHashTags(self.config.fromDate, self.config.toDate)
+
+        try:
+            #step 2: remove stopwords
+            with open(config["bannedtags"], 'r') as f:
+                bannedtags = f.readlines()
+            bannedtagset = set()
+            for word in bannedtags:
+                bannedtagset.add(word.lower().strip())
+            logging.debug("Loaded {} stopwords".format(len(bannedtagset)))
+        except Exception, e:
+            logging.debug("Error processing bannedtags: {}".format(e))
 
         ##extract individual hashtags
         hashtags = {}
 
         # get a complete list of tags
         for twit in data:
-            text = twit[0]
+            text = unidecode(str(twit[0]).decode("utf-8"))
             tags = [result for result in re.findall('(#[A-Za-z0-9]+)*', text) if len(result) > 0]
             for tag in tags:
-                if tag in hashtags:
-                    hashtags[tag] += 1
-                else:
-                    hashtags[tag] = 1
+                if tag.lower() not in bannedtagset:
+                    if tag.lower() in hashtags:
+                        hashtags[tag.lower()] += 1
+                    else:
+                        hashtags[tag.lower()] = 1
 
         sortedTags = sorted(hashtags.iteritems(), key=operator.itemgetter(1))[max(number, cloud) * -1:]
         cloudTags = sorted(sortedTags, key=lambda (a, b): a.lower().replace("#", ""))
         sortedTags.reverse()
         self.data["hashtags"] = sortedTags[0:number]
         self.data["cloudtags"] = cloudTags[0:cloud]
-        print "{} of {} hashtags reported".format(len(self.data["hashtags"]), len(hashtags))
+        logging.debug("{} of {} hashtags reported".format(len(self.data["hashtags"]), len(hashtags)))
 
-    def printWords(self, number, cloud):
+    def print_words(self, config):
+        logging.debug("Printing words stats")
+        number = config["number"]
+        cloud = config["cloud"]
+
         data = self.db.getTweets(self.config.fromDate, self.config.toDate)
+
+        try:
+            #step 2: remove stopwords
+            with open(config["stopwords"], 'r') as f:
+                stopwords = f.readlines()
+            stopset = set()
+            for word in stopwords:
+                stopset.add(unidecode(word.lower().strip()))
+            logging.debug("Loaded {} stopwords".format(len(stopset)))
+        except Exception, e:
+            logging.debug("Error processing stopwords: {}".format(e))
 
         ##extract individual hashtags
         words = {}
@@ -94,30 +161,46 @@ class Output():
         # get a complete list of tags
         for twit in data:
             text = twit[0]
-            tags = [result for result in self.__split(text)]
-            for tag in tags:
-                if tag in words:
-                    words[tag] += 1
-                else:
-                    words[tag] = 1
+            #logging.debug(text)
+            try:
+                tags = [result for result in self.__split(text, stopwords)]
+                for tag in tags:
+                    if tag in words:
+                        words[tag] += 1
+                    else:
+                        words[tag] = 1
+            except Exception, e:
+                logging.error("Error procesing: {}".format(twit[0]))
+                raise e
 
         sortedWords = sorted(words.iteritems(), key=operator.itemgetter(1))[max(number, cloud) * -1:]
         cloudWords = sorted(sortedWords, key=lambda (a, b): a.lower().replace("#", ""))
         sortedWords.reverse()
         self.data["words"] = sortedWords[0:number]
         self.data["cloudwords"] = cloudWords[0:cloud]
-        print "{} of {} hashtags reported".format(len(self.data["words"]), len(words))
 
-    def printReport(self):
-        """Get the string from the delegate and print it on a file"""
-        self.config.file.write(self.getRawString())
-        self.config.file.close()
-
-    def __split(self, text):
+    def __split(self, text, stopwords):
         """Function to tokenize a text removing unwanted texts"""
-
         ## TODO: borrar stopwords, enlaces, menciones, hashtags, puntuacion
-        return string.split(unidecode(text))
+        #Test to extract with \b[^\W\d_]+\b
+
+        #step 1: unidecode and remove urls, users, hashtags and punctuation
+        try:
+            text = unidecode(str(text).decode("utf-8"))
+            text = re.compile("[\w]+://[\w\.\/\d]+").sub(" ", text)
+            text = re.compile("[\@\#][\w]+").sub(" ", text)
+            text = re.compile(r'[\'\!\"\#\$\%\&\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~\'\s]').sub(" ", text)
+            text = re.compile(r'\b\w{1,5}\b').sub(" ", text)
+            #step 2: remove stopwords
+            words = []
+            for word in text.split(" "):
+                if len(word) > 0:
+                    if not word.lower() in stopwords:
+                        words.append(word)
+            return words
+        except UnicodeDecodeError:
+            logging.warning("Pasando de {}".format(unidecode(text)))
+            return []
 
 
 class JSONOutput(Output):
@@ -179,11 +262,14 @@ class HTMLOutput(Output):
 
         try:
             """Try to search at the configuration"""
+            logging.debug(self.config.data["output"]["html"]["template"])
             templateFile = self.config.data["output"]["html"]["template"]
-            with open(templateFile) as f:
-                template = Template(f.read())
-        except Exception:
+            with codecs.open(templateFile, 'r', 'utf-8') as f:
+                template = env.from_string(f.read())
+            logging.debug("Using {}".format(templateFile))
+        except Exception, e:
             """If not found using a default"""
+            logging.debug("Using default html template ({})".format(e))
             template = env.get_template("template.html")
 
         try:
