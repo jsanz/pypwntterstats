@@ -147,6 +147,7 @@ class Output():
         try:
             #step 2: remove stopwords
             with open(config["stopwords"], 'r') as f:
+                logging.debug("Opening {}".format(f))
                 stopwords = f.readlines()
             stopset = set()
             for word in stopwords:

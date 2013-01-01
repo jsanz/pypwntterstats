@@ -9,14 +9,31 @@ db:
 
 output:
     json:
-        callback: myCallback
+        jsonp:      yes
+        callback:   'myCallback'
     html:
 #        template:  myTemplate.html
 
-clients:
-    print:      yes
-    minimum:    6
+stats:
+    general:
+        print:      yes
 
-busiest:
-    print:      yes
-    number:     10
+    clients:
+        print:      yes
+        minimum:    20
+
+    busiest:
+        print:      yes
+        number:     20
+
+    hashtags:
+        print:      yes
+        number:     20
+        cloud:      50
+        bannedtags: 'bannedtags.txt'
+
+    words:
+        print:      yes
+        number:     20
+        cloud:      50
+        stopwords:  'stopwords.txt'
